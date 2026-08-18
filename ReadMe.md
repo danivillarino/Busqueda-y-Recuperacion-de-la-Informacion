@@ -1,9 +1,10 @@
-# Optimización de Aplicaciones Web
+# Búsqueda y Recuperación de la Información
 
 ## Integrantes del equipo
 
-- **Javier de Jesús Ortiz Miss**
-- **José Antonio Polanco Oxté**
+- **Andrea Baeza Estrella**
+- **Integrante 2**
+- **Integrante 3**
 - **Daniela Villarino Budip**
 
 ## Presentación del equipo
