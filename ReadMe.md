@@ -3,7 +3,7 @@
 ## Integrantes del equipo
 
 - **Andrea Baeza Estrella**
-- **Integrante 2**
+- **Erick Gilberto Gómez Manzanero**
 - **Marco Antonio Magaña Mis**
 - **Daniela Villarino Budip**
 
@@ -12,7 +12,7 @@
 | NOMBRES                    | FOTO                                                                                            |
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
 | Andrea Baeza Estrella| <img src="./assets/img/profile_pictures/foto.jpeg" width="30%" alt="foto"/>         |
-| Integrante 2| <img src="./assets/img/profile_pictures/foto.jpeg" width="30%" alt="foto"/>         |
+| Integrante 2| <img src="./assets/img/profile_pictures/presentacion.jpeg" width="30%" alt="foto"/>         |
 | Marco Antonio Magaña Mis | <img src="./assets/img/profile_pictures/MarcoA.jpeg" width="30%" alt="fotoo"/>        |
 | Daniela Villarino Budip    | <img src="./assets/img/profile_pictures/villarinoDaniela.jpg" width="30%" alt="foto"/> |
 
