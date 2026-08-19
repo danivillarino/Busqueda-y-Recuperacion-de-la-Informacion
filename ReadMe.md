@@ -13,7 +13,7 @@
 | -------------------------- | ----------------------------------------------------------------------------------------------- |
 | Andrea Baeza Estrella| <img src="./assets/img/profile_pictures/foto.jpeg" width="30%" alt="foto"/>         |
 | Integrante 2| <img src="./assets/img/profile_pictures/foto.jpeg" width="30%" alt="foto"/>         |
-| Integrante 3 | <img src="./assets/img/profile_pictures/MarcoA.jpg" width="30%" alt="fotoo"/>        |
+| Marco Antonio Magaña Mis | <img src="./assets/img/profile_pictures/MarcoA.jpeg" width="30%" alt="fotoo"/>        |
 | Daniela Villarino Budip    | <img src="./assets/img/profile_pictures/villarinoDaniela.jpg" width="30%" alt="foto"/> |
 
 ---
