@@ -1,4 +1,4 @@
-# Búsqueda y Recuperación de la Información
+# Búsqueda y Recuperación de la Información en la Web
 
 ## Integrantes del equipo
 
