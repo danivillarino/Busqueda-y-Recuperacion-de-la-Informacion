@@ -1,19 +1,11 @@
-# Búsqueda y Recuperación de la Información en la Web
+# Proyecto de indizacion y busqueda
 
-## Integrantes del equipo
+Carpeta base dividida segun las responsabilidades del documento del equipo.
+Los archivos de codigo contienen comentarios de orientacion, no implementaciones.
 
-- **Andrea Baeza Estrella**
-- **Erick Gilberto Gómez Manzanero**
-- **Marco Antonio Magaña Mis**
-- **Daniela Villarino Budip**
+Completar cada archivo siguiendo el contrato entre modulos. Respetar las
+bibliotecas permitidas, los nombres de tablas y funciones, las rutas Flask y
+las formulas tf-idf indicadas en el documento de trabajo.
 
-## Presentación del equipo
-
-| NOMBRES                    | FOTO                                                                                            |
-| -------------------------- | ----------------------------------------------------------------------------------------------- |
-| Andrea Baeza Estrella| <img src="./assets/img/profile_pictures/AndreaBaeza.JPG" width="30%" alt="foto"/>         |
-| Erick Gilberto Gómez Manzanero| <img src="./assets/img/profile_pictures/presentacion.jpeg" width="30%" alt="foto"/>         |
-| Marco Antonio Magaña Mis | <img src="./assets/img/profile_pictures/MarcoA.jpeg" width="30%" alt="fotoo"/>        |
-| Daniela Villarino Budip    | <img src="./assets/img/profile_pictures/dani_villarino.jpg" width="30%" alt="foto"/> |
-
----
+Antes de entregar, agregar archivos .txt de prueba, verificar la integracion,
+crear la captura captura.png y preparar el ZIP con el nombre acordado.
