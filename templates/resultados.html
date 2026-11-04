@@ -1,3 +1,18 @@
-<!-- Persona 4: crear aqui la vista de resultados. -->
-<!-- Mostrar nombre con enlace de descarga, fragmento de hasta 50 caracteres y coseno. -->
-<!-- Recibir resultados ordenados de mayor a menor relevancia. -->
+{% extends "base.html" %}
+{% block title %}Resultados · Índice y búsqueda{% endblock %}
+{% block content %}
+<h1>Resultados de búsqueda</h1>
+<p>Consulta: <strong>{{ consulta }}</strong></p>
+
+{% if resultados %}
+  {% for nombre, fragmento, coseno in resultados %}
+    <article class="resultado">
+      <h2><a href="{{ url_for('descargar', nombre=nombre) }}">{{ nombre }}</a></h2>
+      <p class="fragmento">{{ fragmento }}</p>
+      <p>Similitud coseno: {{ "%.4f"|format(coseno) }}</p>
+    </article>
+  {% endfor %}
+{% else %}
+  <p>No se encontraron documentos para esta consulta.</p>
+{% endif %}
+{% endblock %}

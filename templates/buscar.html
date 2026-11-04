@@ -1,1 +1,16 @@
-<!-- Persona 4: crear aqui el formulario de busqueda que envia consulta a /buscar. -->
+{% extends "base.html" %}
+{% block title %}Buscar documentos · Índice y búsqueda{% endblock %}
+{% block content %}
+<h1>Buscar documentos</h1>
+<p>Escribe un término o una frase para encontrar documentos relevantes.</p>
+
+{% if error %}
+  <p class="error" role="alert">{{ error }}</p>
+{% endif %}
+
+<form action="{{ url_for('pagina_busqueda') }}" method="get">
+  <label for="consulta">Consulta</label>
+  <input id="consulta" name="consulta" type="search" required>
+  <button type="submit">Buscar</button>
+</form>
+{% endblock %}
