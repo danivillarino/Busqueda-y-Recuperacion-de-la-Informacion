@@ -1,0 +1,3 @@
+La recuperacion de informacion organiza documentos para responder consultas.
+Un indice invertido relaciona cada termino con los documentos donde aparece.
+La relevancia ayuda a ordenar los resultados de una busqueda.

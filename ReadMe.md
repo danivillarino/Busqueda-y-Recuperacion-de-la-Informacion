@@ -1,165 +1,122 @@
-# Proyecto de indizacion y busqueda
+# Proyecto de indización y búsqueda
 
-Carpeta base dividida segun las responsabilidades del documento del equipo.
-Los archivos de codigo contienen comentarios de orientacion, no implementaciones.
+Aplicación web en Python y Flask para cargar documentos `.txt`, construir un
+índice invertido en MySQL/MariaDB y buscar documentos por relevancia.
 
-Completar cada archivo siguiendo el contrato entre modulos. Respetar las
-bibliotecas permitidas, los nombres de tablas y funciones, las rutas Flask y
-las formulas tf-idf indicadas en el documento de trabajo.
+## Estado actual
 
-Antes de entregar, agregar archivos .txt de prueba, verificar la integracion,
-crear la captura captura.png y preparar el ZIP con el nombre acordado.
+Ya están implementados:
 
----
-# División del trabajo: módulo de indización y búsqueda
+- Interfaz Flask para cargar archivos `.txt`, hacer consultas y descargar los
+  documentos cargados.
+- Validación de extensión y nombre de archivo durante la carga.
+- Plantillas HTML y estilos en `static/css/style.css`.
+- Configuración de conexión y operaciones de base de datos en `config.py` y
+  `db.py`.
+- Esquema de las tablas `documentos`, `diccionario` y `posting` en
+  `esquema.sql`.
+- Cuatro documentos de ejemplo en `datos_prueba/`.
 
-Equipo de 4 personas · Entrega: 4 de noviembre · Archivo: `Apellido1Apellido2Apellido3Apellido4.zip`
+**Pendiente para que funcione el flujo completo:** `indexador.py` y
+`buscador.py` todavía contienen indicaciones, no implementaciones. Por eso la
+interfaz puede abrirse, pero cargar archivos e iniciar una búsqueda requieren
+que se completen e integren esos módulos.
 
-## 1. Objetivo y restricciones
+## Requisitos
 
-Aplicación web (Python + Flask + MySQL) que carga archivos `.txt`, genera el índice invertido de toda la carpeta del servidor y permite buscar. Los resultados muestran enlace de descarga, fragmento de 50 caracteres y similitud coseno, ordenados por relevancia tf-idf.
+- Python 3.10 o posterior.
+- MySQL o MariaDB. XAMPP puede proporcionar MariaDB; inicia el servicio
+  **MySQL** desde el panel de XAMPP.
+- Dependencias de Python declaradas en `requirements.txt`.
 
-- Prohibido usar bibliotecas que calculen tf, idf o matrices (numpy, sklearn, pandas). Solo `math`, `re`, `collections`, `os`.
-- Se permite Flask y un conector de MySQL (`mysql-connector-python` o `pymysql`).
-- El índice se reconstruye completo cada vez que se carga una colección.
-- Entregable: el proyecto y una captura de pantalla de una búsqueda, todo en un ZIP.
+## Instalación
 
-## 2. Estructura de carpetas
+Desde la carpeta del proyecto, instala las dependencias:
 
-```
-proyecto/
-  app.py                 # Persona 4
-  config.py              # Persona 1 (credenciales y rutas)
-  db.py                  # Persona 1
-  esquema.sql            # Persona 1
-  indexador.py           # Persona 2
-  buscador.py            # Persona 3
-  templates/
-    cargar.html          # Persona 4
-    buscar.html          # Persona 4
-    resultados.html      # Persona 4
-  archivos_subidos/      # carpeta del servidor con los .txt
-  captura.png
+```powershell
+py -m pip install -r requirements.txt
 ```
 
-## 3. Nombres acordados (no cambiar sin avisar)
+## Preparar la base de datos
 
-### Base de datos
-
-- Base de datos: `indice_busqueda`
-- Tabla `documentos`: `doc_id` (INT, PK, auto), `nombre_archivo` (VARCHAR 255, único)
-- Tabla `diccionario`: `termino` (VARCHAR 100, PK), `num_docs` (INT), `total_frecuencias` (INT)
-- Tabla `posting`: `termino` (VARCHAR 100), `doc_id` (INT), `frecuencia` (INT), `nombre_archivo` (VARCHAR 255), `fragmento` (VARCHAR 50); clave primaria compuesta (`termino`, `doc_id`)
-
-### Rutas y constantes
-
-- `CARPETA_ARCHIVOS = "archivos_subidos"`
-- `LONGITUD_FRAGMENTO = 50`
-- Rutas Flask: `/` (cargar), `/buscar` (consulta), `/descargar/<nombre>` (descarga)
-
-## 4. Responsabilidades y funciones
-
-### Persona 1: Base de datos (`db.py`, `esquema.sql`, `config.py`)
-
-- `obtener_conexion()` devuelve una conexión a MySQL.
-- `crear_tablas()` ejecuta el script `esquema.sql`.
-- `limpiar_indice()` vacía `documentos`, `diccionario` y `posting` antes de reconstruir.
-- `insertar_documento(nombre_archivo)` devuelve el `doc_id`.
-- `insertar_diccionario(termino, num_docs, total_frecuencias)`
-- `insertar_posting(termino, doc_id, frecuencia, nombre_archivo, fragmento)`
-- `obtener_total_documentos()` devuelve N.
-- `obtener_diccionario_termino(termino)` devuelve `(num_docs, total_frecuencias)` o `None`.
-- `obtener_posting_termino(termino)` devuelve lista de `(doc_id, frecuencia, nombre_archivo, fragmento)`.
-- `obtener_postings_documento(doc_id)` devuelve lista de `(termino, frecuencia)`; la necesita el buscador para la norma del documento.
-
-También debe documentar cómo crear la base y el usuario en MySQL.
-
-### Configuración de MySQL (Persona 1)
-
-Instala el conector con `pip install mysql-connector-python`. Antes de iniciar
-la aplicación, entra a MySQL como administrador y crea la base y el usuario
-(cambia la contraseña de ejemplo por una segura):
+En phpMyAdmin (`http://localhost/phpmyadmin`), abre la pestaña **SQL** y crea
+una base y un usuario para el proyecto. Cambia la contraseña de ejemplo por
+una propia:
 
 ```sql
 CREATE DATABASE indice_busqueda
   CHARACTER SET utf8mb4
   COLLATE utf8mb4_unicode_ci;
+
 CREATE USER 'indice_app'@'localhost' IDENTIFIED BY 'CAMBIA_ESTA_CLAVE';
+
 GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, REFERENCES
   ON indice_busqueda.* TO 'indice_app'@'localhost';
 ```
 
-Configura las variables `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`,
-`MYSQL_PASSWORD` y `MYSQL_DATABASE` en el entorno del proceso que ejecuta
-Python. `.env.example` muestra los nombres y valores de referencia; no se carga
-automáticamente. Mantén las credenciales reales fuera del repositorio.
+Si ya existe la base o el usuario, no repitas los comandos `CREATE`; usa
+phpMyAdmin para conceder los permisos o actualizar la contraseña.
 
-Con la base de datos creada, ejecuta `crear_tablas()` desde `db.py` para generar
-las tablas. El esquema puede volver a ejecutarse sin borrar los datos
-existentes. `limpiar_indice()` elimina los registros actuales en el orden
-adecuado antes de reconstruir el índice.
+Configura las variables de conexión en la misma terminal desde la que ejecutarás
+Python. En **PowerShell**:
 
-### Persona 2: Indexador (`indexador.py`)
+```powershell
+$env:MYSQL_HOST = "localhost"
+$env:MYSQL_PORT = "3306"
+$env:MYSQL_USER = "indice_app"
+$env:MYSQL_PASSWORD = "TU_CONTRASEÑA"
+$env:MYSQL_DATABASE = "indice_busqueda"
+```
 
-- `leer_archivo(ruta)` devuelve el texto (probar con `utf-8` y `latin-1`).
-- `tokenizar(texto)` pasa a minúsculas, quita signos y devuelve lista de términos.
-- `quitar_stopwords(tokens)` filtra una lista de stopwords en español.
-- `contar_frecuencias(tokens)` devuelve `{termino: frecuencia}` con un diccionario de Python.
-- `extraer_fragmento(texto, termino)` devuelve hasta 50 caracteres alrededor de la primera aparición del término.
-- `indexar_coleccion(carpeta)` recorre los `.txt`, limpia el índice, procesa cada archivo y llena las tres tablas. Calcula `num_docs` y `total_frecuencias` por término.
+En **CMD**:
 
-Acordar con la Persona 1 si el fragmento se guarda por (término, documento), como se indica arriba.
+```cmd
+set "MYSQL_HOST=localhost"
+set "MYSQL_PORT=3306"
+set "MYSQL_USER=indice_app"
+set "MYSQL_PASSWORD=TU_CONTRASEÑA"
+set "MYSQL_DATABASE=indice_busqueda"
+```
 
-### Persona 3: Buscador (`buscador.py`)
+Reemplaza `TU_CONTRASEÑA` por la contraseña elegida al crear el usuario. Las
+variables configuradas así duran mientras esa ventana siga abierta. No subas
+contraseñas reales al repositorio; `.env.example` solo muestra nombres y
+valores de ejemplo y no se carga automáticamente.
 
-- `calcular_idf(N, df)` devuelve `math.log10(N / df)`.
-- `calcular_tf(frecuencia)` devuelve la frecuencia, o `1 + log10(frecuencia)` si el equipo prefiere tf logarítmico (definirlo y mantenerlo).
-- `construir_vector_consulta(tokens)` devuelve `{termino: peso tf-idf}`.
-- `construir_vector_documento(doc_id)` devuelve `{termino: peso tf-idf}` usando `obtener_postings_documento`.
-- `norma(vector)` devuelve la raíz de la suma de cuadrados.
-- `similitud_coseno(vec_a, vec_b)` calcula producto punto entre producto de normas, a mano.
-- `buscar(consulta)` devuelve una lista de `(nombre_archivo, fragmento, coseno)` ordenada de mayor a menor coseno. Para la consulta debe usar las mismas funciones `tokenizar` y `quitar_stopwords` del indexador.
+Una vez creada la base, crea las tablas desde la carpeta del proyecto:
 
-Casos límite: consulta vacía, término inexistente (df = 0) y documentos con norma 0.
+```powershell
+py -c "import db; db.crear_tablas(); print('Tablas creadas')"
+```
 
-### Persona 4: Aplicación web e integración (`app.py`, `templates/`)
+## Ejecutar la aplicación
 
-- `cargar_archivos()` recibe el formulario con varios `.txt`, los guarda en `archivos_subidos/` y llama a `indexar_coleccion(CARPETA_ARCHIVOS)`.
-- `pagina_busqueda()` muestra el cuadro de búsqueda.
-- `resultados()` llama a `buscar(consulta)` y muestra nombre con enlace, fragmento y coseno.
-- `descargar(nombre)` usa `send_from_directory`.
-- Validar que solo se acepten archivos `.txt` y usar `secure_filename`.
-- Preparar 4 o 5 archivos de prueba, tomar la captura (`captura.png`), escribir un `README.md` breve con instrucciones y armar el ZIP.
+Cuando `indexador.py` y `buscador.py` estén implementados, inicia el servidor:
 
-## 5. Contrato entre módulos
+```powershell
+py app.py
+```
 
-| Función | Quién la implementa | Quién la usa |
-| --- | --- | --- |
-| `indexar_coleccion(carpeta)` | Persona 2 | Persona 4 |
-| `buscar(consulta)` | Persona 3 | Persona 4 |
-| `tokenizar`, `quitar_stopwords` | Persona 2 | Persona 3 |
-| Funciones `obtener_*` de `db.py` | Persona 1 | Personas 3 y 4 |
-| Funciones `insertar_*`, `limpiar_indice` | Persona 1 | Persona 2 |
+Abre <http://127.0.0.1:5000/> en el navegador. Selecciona los archivos `.txt`
+desde `datos_prueba/` en el formulario para cargarlos e indexarlos. Después usa
+**Buscar** para consultar y los nombres de los resultados para descargar los
+documentos.
 
-## 6. Fórmulas a implementar
+Los archivos de la colección se guardan en `archivos_subidos/`. Al cargar una
+colección, el indexador debe reconstruir el índice en la base de datos, según
+el contrato del proyecto.
 
-- `idf(t) = log10(N / df(t))`, con N = total de documentos y df = `num_docs` del diccionario.
-- `peso(t, d) = tf(t, d) × idf(t)`
-- `coseno(q, d) = Σ(q_i × d_i) / (‖q‖ × ‖d‖)`
+## Estructura principal
 
-## 7. Calendario sugerido
-
-1. Hoy, primera hora: todos revisan este documento, fijan nombres de tablas y funciones, y crean el repositorio o la carpeta compartida.
-2. Cada persona programa su módulo con datos de prueba propios.
-3. Integración: Persona 4 conecta todo y el equipo prueba junto con los mismos archivos `.txt`.
-4. Últimas horas: captura de pantalla, README, nombrar el ZIP correctamente y verificar que abre y corre.
-
-## 8. Lista de verificación final
-
-- [ ] Las tres tablas guardan todos los campos pedidos
-- [ ] El índice se regenera al cargar una colección
-- [ ] Los resultados muestran enlace, fragmento de 50 caracteres y coseno
-- [ ] Orden descendente por relevancia
-- [ ] Sin numpy, sklearn ni pandas
-- [ ] Captura de pantalla incluida
-- [ ] ZIP con el formato `Apellido1Apellido2Apellido3Apellido4.zip`
+```text
+app.py                  Aplicación Flask y rutas
+config.py               Configuración de MySQL y rutas
+db.py                   Acceso a datos MySQL/MariaDB
+esquema.sql             Definición de las tablas
+indexador.py            Lectura e indexación de documentos (pendiente)
+buscador.py             Búsqueda tf-idf (pendiente)
+templates/              Vistas HTML de la aplicación
+static/css/style.css    Estilos de la interfaz
+archivos_subidos/       Colección cargada por la aplicación
+datos_prueba/           Documentos de ejemplo para probar
+```

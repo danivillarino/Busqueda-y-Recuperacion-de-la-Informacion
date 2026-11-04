@@ -1,2 +1,2 @@
-# Persona 4: agregar Flask como dependencia del servidor web.
+Flask
 mysql-connector-python

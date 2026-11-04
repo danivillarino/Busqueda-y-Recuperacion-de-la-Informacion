@@ -1,0 +1,3 @@
+El aprendizaje automatico utiliza datos para reconocer patrones.
+Los documentos de entrenamiento permiten construir modelos de clasificacion.
+La busqueda de informacion puede aprovechar estos modelos.
