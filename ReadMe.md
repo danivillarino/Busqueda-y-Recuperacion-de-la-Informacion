@@ -74,6 +74,31 @@ proyecto/
 
 También debe documentar cómo crear la base y el usuario en MySQL.
 
+### Configuración de MySQL (Persona 1)
+
+Instala el conector con `pip install mysql-connector-python`. Antes de iniciar
+la aplicación, entra a MySQL como administrador y crea la base y el usuario
+(cambia la contraseña de ejemplo por una segura):
+
+```sql
+CREATE DATABASE indice_busqueda
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+CREATE USER 'indice_app'@'localhost' IDENTIFIED BY 'CAMBIA_ESTA_CLAVE';
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, REFERENCES
+  ON indice_busqueda.* TO 'indice_app'@'localhost';
+```
+
+Configura las variables `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`,
+`MYSQL_PASSWORD` y `MYSQL_DATABASE` en el entorno del proceso que ejecuta
+Python. `.env.example` muestra los nombres y valores de referencia; no se carga
+automáticamente. Mantén las credenciales reales fuera del repositorio.
+
+Con la base de datos creada, ejecuta `crear_tablas()` desde `db.py` para generar
+las tablas. El esquema puede volver a ejecutarse sin borrar los datos
+existentes. `limpiar_indice()` elimina los registros actuales en el orden
+adecuado antes de reconstruir el índice.
+
 ### Persona 2: Indexador (`indexador.py`)
 
 - `leer_archivo(ruta)` devuelve el texto (probar con `utf-8` y `latin-1`).
