@@ -86,8 +86,10 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-button {
+button,
+.boton-enlace {
   justify-self: start;
+  display: inline-block;
   padding: 0.65rem 1.1rem;
   border: 0;
   border-radius: 0.5rem;
@@ -95,11 +97,19 @@ button {
   color: #fff;
   font: inherit;
   font-weight: 700;
+  text-decoration: none;
   cursor: pointer;
 }
 
-button:hover {
+button:hover,
+.boton-enlace:hover {
   background: #105570;
+}
+
+button:focus-visible,
+.boton-enlace:focus-visible {
+  outline: 3px solid #66b9df;
+  outline-offset: 2px;
 }
 
 .mensaje,
