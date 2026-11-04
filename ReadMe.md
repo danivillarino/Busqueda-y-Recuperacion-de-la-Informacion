@@ -3,6 +3,12 @@
 Aplicación web en Python y Flask para cargar documentos `.txt`, construir un
 índice invertido en MySQL/MariaDB y buscar documentos por relevancia.
 
+# Integrantes del equipo:
+- Baeza Estrella Andrea
+- Gómez Manzanero Erick Gilberto
+- Magaña Mis Marco Antonio
+- Villarino Budip Daniela
+
 ## Estado actual
 
 Ya están implementados:
