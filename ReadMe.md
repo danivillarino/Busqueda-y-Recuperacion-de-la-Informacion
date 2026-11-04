@@ -16,11 +16,14 @@ Ya están implementados:
 - Esquema de las tablas `documentos`, `diccionario` y `posting` en
   `esquema.sql`.
 - Cuatro documentos de ejemplo en `datos_prueba/`.
+- Módulo de búsqueda `buscador.py`: pesos tf-idf, normas, similitud coseno,
+  ranking descendente y casos límite (consulta vacía, término inexistente,
+  normas cero).
 
-**Pendiente para que funcione el flujo completo:** `indexador.py` y
-`buscador.py` todavía contienen indicaciones, no implementaciones. Por eso la
-interfaz puede abrirse, pero cargar archivos e iniciar una búsqueda requieren
-que se completen e integren esos módulos.
+**Pendiente para que funcione el flujo completo:** `indexador.py` todavía
+contiene indicaciones, no una implementación. El buscador ya está listo, pero
+sin índice no hay documentos que consultar; cargar archivos y generar el índice
+requieren completar ese módulo.
 
 ## Requisitos
 
@@ -91,7 +94,7 @@ py -c "import db; db.crear_tablas(); print('Tablas creadas')"
 
 ## Ejecutar la aplicación
 
-Cuando `indexador.py` y `buscador.py` estén implementados, inicia el servidor:
+Cuando `indexador.py` esté implementado, inicia el servidor:
 
 ```powershell
 py app.py
@@ -114,7 +117,7 @@ config.py               Configuración de MySQL y rutas
 db.py                   Acceso a datos MySQL/MariaDB
 esquema.sql             Definición de las tablas
 indexador.py            Lectura e indexación de documentos (pendiente)
-buscador.py             Búsqueda tf-idf (pendiente)
+buscador.py             Búsqueda tf-idf (implementado)
 templates/              Vistas HTML de la aplicación
 static/css/style.css    Estilos de la interfaz
 archivos_subidos/       Colección cargada por la aplicación
