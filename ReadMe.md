@@ -16,14 +16,14 @@ Ya están implementados:
 - Esquema de las tablas `documentos`, `diccionario` y `posting` en
   `esquema.sql`.
 - Cuatro documentos de ejemplo en `datos_prueba/`.
+- Módulo de indexación `indexador.py`: lectura UTF-8/latin-1, tokenización,
+  stopwords en español, frecuencias, fragmentos e índice invertido.
 - Módulo de búsqueda `buscador.py`: pesos tf-idf, normas, similitud coseno,
   ranking descendente y casos límite (consulta vacía, término inexistente,
   normas cero).
 
-**Pendiente para que funcione el flujo completo:** `indexador.py` todavía
-contiene indicaciones, no una implementación. El buscador ya está listo, pero
-sin índice no hay documentos que consultar; cargar archivos y generar el índice
-requieren completar ese módulo.
+Con la base de datos configurada, el flujo de carga, indexación y búsqueda está
+implementado.
 
 ## Requisitos
 
@@ -92,22 +92,61 @@ Una vez creada la base, crea las tablas desde la carpeta del proyecto:
 py -c "import db; db.crear_tablas(); print('Tablas creadas')"
 ```
 
-## Ejecutar la aplicación
+## Probar la aplicación
 
-Cuando `indexador.py` esté implementado, inicia el servidor:
+Desde la terminal en la que configuraste las variables de MySQL, inicia el
+servidor:
 
 ```powershell
 py app.py
 ```
 
-Abre <http://127.0.0.1:5000/> en el navegador. Selecciona los archivos `.txt`
-desde `datos_prueba/` en el formulario para cargarlos e indexarlos. Después usa
-**Buscar** para consultar y los nombres de los resultados para descargar los
-documentos.
+1. Abre <http://127.0.0.1:5000/> y carga los cuatro archivos `.txt` de
+   `datos_prueba/`. La página debe confirmar que fueron indexados.
+2. Usa **Buscar** y prueba, por ejemplo, `energia renovable` y
+   `recuperacion informacion`. Deben aparecer documentos pertinentes, con un
+   fragmento de hasta 50 caracteres y una similitud entre 0 y 1.
+3. Abre un enlace de resultado: debe descargarse el documento correspondiente.
+4. Vuelve a cargar los mismos archivos y busca otra vez. La carga reconstruye
+   el índice; no debe duplicar documentos ni postings.
 
-Los archivos de la colección se guardan en `archivos_subidos/`. Al cargar una
-colección, el indexador debe reconstruir el índice en la base de datos, según
-el contrato del proyecto.
+Los archivos de la colección se guardan en `archivos_subidos/`. Cada carga
+reconstruye el índice completo en la base de datos, según el contrato del
+proyecto.
+
+Para comprobar las tablas en phpMyAdmin, ejecuta:
+
+```sql
+SELECT COUNT(*) AS documentos FROM documentos;
+SELECT COUNT(*) AS terminos FROM diccionario;
+SELECT COUNT(*) AS postings FROM posting;
+
+SELECT termino, num_docs, total_frecuencias
+FROM diccionario
+WHERE termino IN ('energia', 'informacion');
+```
+
+Con los cuatro documentos de ejemplo debe haber 4 filas en `documentos`; las
+otras tablas deben contener términos y postings. En `diccionario`, `num_docs`
+cuenta los documentos que contienen el término y `total_frecuencias` suma sus
+apariciones en toda la colección.
+
+Para verificar la lectura y normalización sin iniciar Flask:
+
+```powershell
+py -c "from indexador import leer_archivo, tokenizar, quitar_stopwords, contar_frecuencias, extraer_fragmento; from pathlib import Path; p=Path('datos_prueba/energia_renovable.txt'); texto=leer_archivo(p); tokens=quitar_stopwords(tokenizar(texto)); print('Lectura:', bool(texto)); print('Tokens:', tokens[:10]); print('Frecuencias:', contar_frecuencias(tokens)); print('Fragmento <= 50:', len(extraer_fragmento(texto, 'energia')) <= 50)"
+```
+
+Para probar ambas codificaciones con texto acentuado, crea dos archivos de
+prueba desde PowerShell:
+
+```powershell
+py -c "from pathlib import Path; texto='Árbol, corazón y energía.'; Path('datos_prueba/prueba_utf8.txt').write_text(texto, encoding='utf-8'); Path('datos_prueba/prueba_latin1.txt').write_bytes(texto.encode('latin-1'))"
+```
+
+Cárgalos desde la aplicación y busca `corazón` o `energía`; ambos documentos
+deben aparecer. Puedes borrar esos dos archivos de `datos_prueba/` después de
+probarlos.
 
 ## Estructura principal
 

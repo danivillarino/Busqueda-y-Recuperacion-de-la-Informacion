@@ -1,4 +1,4 @@
-"""Módulo buscador (Persona 3).
+"""Módulo buscador.
 
 Calcula pesos tf-idf, normas y similitud coseno, y ordena los documentos
 por relevancia para una consulta de texto.
