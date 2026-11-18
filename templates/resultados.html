@@ -3,18 +3,19 @@
 {% block content %}
 <h1>Resultados de búsqueda</h1>
 <p>Consulta: <strong>{{ consulta }}</strong></p>
+<p class="ayuda">Sistema: {{ sistema }}</p>
 
 {% if resultados %}
-  {% for nombre, fragmento, coseno in resultados %}
+  {% for nombre, fragmento, puntaje in resultados %}
     <article class="resultado">
       <h2><a href="{{ url_for('descargar', nombre=nombre) }}">{{ nombre }}</a></h2>
       <p class="fragmento">{{ fragmento }}</p>
-      <p>Similitud coseno: {{ "%.4f"|format(coseno) }}</p>
+      <p>{{ etiqueta }}: {{ "%.4f"|format(puntaje) }}</p>
     </article>
   {% endfor %}
 {% else %}
   <p>No se encontraron documentos para esta consulta.</p>
 {% endif %}
 
-<a class="boton-enlace" href="{{ url_for('pagina_busqueda') }}">Volver a buscar</a>
+<a class="boton-enlace" href="{{ url_for('pagina_busqueda', motor=motor, modo=modo) }}">Volver a buscar</a>
 {% endblock %}

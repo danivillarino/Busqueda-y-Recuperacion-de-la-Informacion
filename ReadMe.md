@@ -1,7 +1,9 @@
-# Proyecto de indización y búsqueda
+# Proyecto de indización y búsqueda con FULLTEXT
 
-Aplicación web en Python y Flask para cargar documentos `.txt`, construir un
-índice invertido en MySQL/MariaDB y buscar documentos por relevancia.
+Aplicación web en Python y Flask para cargar documentos `.txt` y buscarlos por
+relevancia. Esta versión agrega a la actividad anterior (índice invertido con
+tf-idf) un segundo buscador basado en los índices **FULLTEXT** de
+MySQL/MariaDB, y permite comparar ambos sistemas desde la interfaz.
 
 # Integrantes del equipo:
 - Baeza Estrella Andrea
@@ -9,33 +11,44 @@ Aplicación web en Python y Flask para cargar documentos `.txt`, construir un
 - Magaña Mis Marco Antonio
 - Villarino Budip Daniela
 
-## Estado actual
+## Qué cambió respecto a "Indización y búsqueda"
 
-Ya están implementados:
+- **Texto completo en la base de datos.** La tabla `documentos` tiene una
+  columna `contenido MEDIUMTEXT` con un índice `FULLTEXT`
+  (`ft_documentos_contenido`). Cada vez que se carga una colección,
+  `indexar_coleccion` guarda ahí el texto de cada archivo.
+- **Relevancia y ranking con funciones de MySQL.** `buscador_fulltext.py`
+  sustituye el cálculo manual de tf-idf, normas y coseno por
+  `MATCH (contenido) AGAINST (...)`. La consulta está en
+  `db.obtener_resultados_fulltext`:
 
-- Interfaz Flask para cargar archivos `.txt`, hacer consultas y descargar los
-  documentos cargados.
-- Validación de extensión y nombre de archivo durante la carga.
-- Plantillas HTML y estilos en `static/css/style.css`.
-- Configuración de conexión y operaciones de base de datos en `config.py` y
-  `db.py`.
-- Esquema de las tablas `documentos`, `diccionario` y `posting` en
-  `esquema.sql`.
-- Cuatro documentos de ejemplo en `datos_prueba/`.
-- Módulo de indexación `indexador.py`: lectura UTF-8/latin-1, tokenización,
-  stopwords en español, frecuencias, fragmentos e índice invertido.
-- Módulo de búsqueda `buscador.py`: pesos tf-idf, normas, similitud coseno,
-  ranking descendente y casos límite (consulta vacía, término inexistente,
-  normas cero).
+  ```sql
+  SELECT nombre_archivo, contenido,
+         MATCH (contenido) AGAINST (%s IN NATURAL LANGUAGE MODE) AS relevancia
+  FROM documentos
+  WHERE MATCH (contenido) AGAINST (%s IN NATURAL LANGUAGE MODE)
+  ORDER BY relevancia DESC, nombre_archivo ASC
+  ```
 
-Con la base de datos configurada, el flujo de carga, indexación y búsqueda está
-implementado.
+  Se pueden elegir los tres modos de búsqueda de texto completo: lenguaje
+  natural, booleano (`+palabra`, `-palabra`, `"frase"`, `prefijo*`) y
+  lenguaje natural con expansión de consulta.
+- **El buscador tf-idf se conserva** (`buscador.py`, tablas `diccionario` y
+  `posting`) para poder comparar. En la página **Buscar** se elige el sistema:
+  FULLTEXT, tf-idf o **Comparar ambos**, que muestra los dos rankings lado a
+  lado.
+- **Corrección:** la columna `termino` de `diccionario` y `posting` ahora usa
+  `utf8mb4_bin`. Con la colación anterior MySQL consideraba iguales
+  `busqueda` y `búsqueda`, el indexador los contaba como términos distintos y
+  la carga fallaba con "Duplicate entry".
+- Se agregó `datos_prueba/motores_busqueda.txt`, con acentos, para probar
+  esa diferencia entre sistemas.
 
 ## Requisitos
 
 - Python 3.10 o posterior.
-- MySQL o MariaDB. XAMPP puede proporcionar MariaDB; inicia el servicio
-  **MySQL** desde el panel de XAMPP.
+- MySQL 5.6+ o MariaDB 10.0+ (índices FULLTEXT en InnoDB). XAMPP proporciona
+  MariaDB; inicia el servicio **MySQL** desde el panel de XAMPP.
 - Dependencias de Python declaradas en `requirements.txt`.
 
 ## Instalación
@@ -59,12 +72,13 @@ CREATE DATABASE indice_busqueda
 
 CREATE USER 'indice_app'@'localhost' IDENTIFIED BY 'CAMBIA_ESTA_CLAVE';
 
-GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, REFERENCES
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX, REFERENCES
   ON indice_busqueda.* TO 'indice_app'@'localhost';
 ```
 
-Si ya existe la base o el usuario, no repitas los comandos `CREATE`; usa
-phpMyAdmin para conceder los permisos o actualizar la contraseña.
+Si ya tienes la base de la actividad anterior, no repitas los `CREATE`; solo
+ejecuta el `GRANT` para agregar los permisos `ALTER` e `INDEX`, que se
+necesitan para actualizar la tabla `documentos`.
 
 Configura las variables de conexión en la misma terminal desde la que ejecutarás
 Python. En **PowerShell**:
@@ -88,15 +102,23 @@ set "MYSQL_DATABASE=indice_busqueda"
 ```
 
 Reemplaza `TU_CONTRASEÑA` por la contraseña elegida al crear el usuario. Las
-variables configuradas así duran mientras esa ventana siga abierta. No subas
-contraseñas reales al repositorio; `.env.example` solo muestra nombres y
-valores de ejemplo y no se carga automáticamente.
+variables configuradas así duran mientras esa ventana siga abierta.
 
-Una vez creada la base, crea las tablas desde la carpeta del proyecto:
+Como alternativa, copia `.env.example` como `.env` y escribe ahí tus valores:
+`config.py` lo carga automáticamente al iniciar. Las variables definidas en la
+terminal tienen prioridad sobre las del `.env`. El archivo `.env` está en
+`.gitignore`; no subas contraseñas reales al repositorio.
+
+Crea las tablas (o actualiza las de la actividad anterior) desde la carpeta
+del proyecto:
 
 ```powershell
-py -c "import db; db.crear_tablas(); print('Tablas creadas')"
+py -c "import db; db.crear_tablas(); print('Tablas listas')"
 ```
+
+`crear_tablas()` crea las tablas que falten y, si `documentos` viene de la
+versión anterior, le agrega la columna `contenido` con su índice FULLTEXT y
+cambia `termino` a `utf8mb4_bin`. Se puede ejecutar varias veces.
 
 ## Probar la aplicación
 
@@ -107,64 +129,95 @@ servidor:
 py app.py
 ```
 
-1. Abre <http://127.0.0.1:5000/> y carga los cuatro archivos `.txt` de
+1. Abre <http://127.0.0.1:5000/> y carga los cinco archivos `.txt` de
    `datos_prueba/`. La página debe confirmar que fueron indexados.
-2. Usa **Buscar** y prueba, por ejemplo, `energia renovable` y
-   `recuperacion informacion`. Deben aparecer documentos pertinentes, con un
-   fragmento de hasta 50 caracteres y una similitud entre 0 y 1.
-3. Abre un enlace de resultado: debe descargarse el documento correspondiente.
-4. Vuelve a cargar los mismos archivos y busca otra vez. La carga reconstruye
-   el índice; no debe duplicar documentos ni postings.
+2. En **Buscar**, deja el sistema **FULLTEXT de MySQL** y prueba
+   `recuperacion informacion`. Deben aparecer documentos con enlace, un
+   fragmento de hasta 50 caracteres y su relevancia `MATCH … AGAINST`.
+3. Prueba el modo **Booleano** con `energ*` (prefijo) o
+   `"recuperacion de informacion"` (frase exacta).
+4. Elige **Comparar ambos sistemas** y busca `busqueda`: FULLTEXT encuentra
+   también `motores_busqueda.txt`, que escribe la palabra con acento; tf-idf
+   no.
+5. Abre un enlace de resultado: debe descargarse el documento.
 
-Los archivos de la colección se guardan en `archivos_subidos/`. Cada carga
-reconstruye el índice completo en la base de datos, según el contrato del
-proyecto.
-
-Para comprobar las tablas en phpMyAdmin, ejecuta:
+Para comprobar el índice FULLTEXT en phpMyAdmin:
 
 ```sql
-SELECT COUNT(*) AS documentos FROM documentos;
-SELECT COUNT(*) AS terminos FROM diccionario;
-SELECT COUNT(*) AS postings FROM posting;
+SELECT doc_id, nombre_archivo, CHAR_LENGTH(contenido) AS caracteres
+FROM documentos;
 
-SELECT termino, num_docs, total_frecuencias
-FROM diccionario
-WHERE termino IN ('energia', 'informacion');
+SELECT nombre_archivo,
+       MATCH (contenido) AGAINST ('energia renovable') AS relevancia
+FROM documentos
+WHERE MATCH (contenido) AGAINST ('energia renovable')
+ORDER BY relevancia DESC;
 ```
 
-Con los cuatro documentos de ejemplo debe haber 4 filas en `documentos`; las
-otras tablas deben contener términos y postings. En `diccionario`, `num_docs`
-cuenta los documentos que contienen el término y `total_frecuencias` suma sus
-apariciones en toda la colección.
+## Comparación de ambos sistemas
 
-Para verificar la lectura y normalización sin iniciar Flask:
+Resultados con los cinco documentos de `datos_prueba/` en MariaDB 10.4
+(XAMPP), modo de lenguaje natural salvo donde se indica:
 
-```powershell
-py -c "from indexador import leer_archivo, tokenizar, quitar_stopwords, contar_frecuencias, extraer_fragmento; from pathlib import Path; p=Path('datos_prueba/energia_renovable.txt'); texto=leer_archivo(p); tokens=quitar_stopwords(tokenizar(texto)); print('Lectura:', bool(texto)); print('Tokens:', tokens[:10]); print('Frecuencias:', contar_frecuencias(tokens)); print('Fragmento <= 50:', len(extraer_fragmento(texto, 'energia')) <= 50)"
-```
+| Consulta | FULLTEXT (relevancia) | tf-idf (coseno) |
+| --- | --- | --- |
+| `energia renovable` | energia_renovable 0.6334 | energia_renovable 0.4374 |
+| `recuperacion informacion` | recuperacion_informacion 0.1646; aprendizaje_automatico y energia_renovable empatados en 0.0063 | recuperacion_informacion 0.2959; energia_renovable 0.0262; aprendizaje_automatico 0.0261 |
+| `busqueda` | 3 documentos, incluido motores_busqueda (dice "búsqueda") | 2 documentos; no encuentra "búsqueda" |
+| `búsqueda` | Los mismos 3 documentos | Solo motores_busqueda |
+| `energ*` (booleano) | energia_renovable | Sin resultados: no tiene operadores |
+| `"recuperacion de informacion"` (booleano) | Solo el documento con la frase exacta | Los 3 documentos con alguna de las palabras |
+| `ecosistemas` (con expansión) | Los 5 documentos: la expansión agrega términos y, con una colección tan pequeña, mete ruido | Solo ecosistemas |
+| Tiempo medio por consulta | ≈ 26 ms | ≈ 365 ms |
 
-Para probar ambas codificaciones con texto acentuado, crea dos archivos de
-prueba desde PowerShell:
+**Ventajas de FULLTEXT**
 
-```powershell
-py -c "from pathlib import Path; texto='Árbol, corazón y energía.'; Path('datos_prueba/prueba_utf8.txt').write_text(texto, encoding='utf-8'); Path('datos_prueba/prueba_latin1.txt').write_bytes(texto.encode('latin-1'))"
-```
+- Menos código propio: el servidor tokeniza, mantiene el índice al insertar y
+  calcula relevancia y ranking. Ya no hace falta mantener `diccionario` ni
+  `posting` para buscar.
+- Más rápido: una sola consulta SQL. El buscador tf-idf hace muchas
+  consultas pequeñas (diccionario y postings de cada documento candidato),
+  así que parte de la diferencia se debe a cómo lo implementamos y no solo
+  al método.
+- Ignora acentos y mayúsculas gracias a la colación (`busqueda` = `búsqueda`).
+- Ofrece búsqueda booleana, frases exactas, prefijos y expansión de consulta.
 
-Cárgalos desde la aplicación y busca `corazón` o `energía`; ambos documentos
-deben aparecer. Puedes borrar esos dos archivos de `datos_prueba/` después de
-probarlos.
+**Ventajas de tf-idf propio**
+
+- Es transparente: conocemos y controlamos cada fórmula
+  (`tf = 1 + log10(f)`, `idf = log10(N/df)`, coseno).
+- El coseno está normalizado entre 0 y 1 y considera la longitud del
+  documento; la relevancia de FULLTEXT no tiene escala fija (con expansión
+  llegó a 2.97) y produjo empates que el coseno sí distinguió.
+- Usa nuestra lista de stopwords en español. InnoDB trae por defecto una
+  lista en inglés e ignora palabras de menos de 3 caracteres
+  (`innodb_ft_min_token_size`).
+- No depende del motor de base de datos: la fórmula sería la misma con
+  otro gestor.
+
+**¿Cuál es mejor?** Para una aplicación real consideramos mejor **FULLTEXT**:
+da resultados equivalentes en las consultas simples (el mismo documento queda
+primero en todas las pruebas), es más de diez veces más rápido en nuestra
+implementación, tolera acentos y agrega operadores de búsqueda sin escribir
+código. El tf-idf propio sigue siendo valioso para entender cómo se calcula la
+relevancia y cuando se necesita controlar el modelo (stopwords en español,
+puntajes normalizados), pero mantenerlo y optimizarlo cuesta más que usar lo
+que ya ofrece el gestor.
 
 ## Estructura principal
 
 ```text
 app.py                  Aplicación Flask y rutas
 config.py               Configuración de MySQL y rutas
-db.py                   Acceso a datos MySQL/MariaDB
-esquema.sql             Definición de las tablas
-indexador.py            Lectura e indexación de documentos (pendiente)
-buscador.py             Búsqueda tf-idf (implementado)
-templates/              Vistas HTML de la aplicación
+db.py                   Acceso a datos MySQL/MariaDB y consulta FULLTEXT
+esquema.sql             Definición de las tablas e índice FULLTEXT
+indexador.py            Lectura e indexación (texto completo + índice invertido)
+buscador_fulltext.py    Búsqueda con MATCH … AGAINST
+buscador.py             Búsqueda tf-idf y coseno (actividad anterior)
+templates/              Vistas HTML (comparar.html muestra ambos rankings)
 static/css/style.css    Estilos de la interfaz
 archivos_subidos/       Colección cargada por la aplicación
 datos_prueba/           Documentos de ejemplo para probar
+CapturaFulltext.png     Captura de una búsqueda FULLTEXT
+CapturaComparacion.png  Captura de la comparación de ambos sistemas
 ```

@@ -12,6 +12,17 @@ app = Flask(__name__)
 UPLOAD_FOLDER = Path(app.root_path, CARPETA_ARCHIVOS).resolve()
 app.config["UPLOAD_FOLDER"] = str(UPLOAD_FOLDER)
 
+MOTORES = {
+    "fulltext": "FULLTEXT de MySQL (MATCH … AGAINST)",
+    "tfidf": "tf-idf y similitud coseno (índice invertido propio)",
+    "comparar": "Comparar ambos sistemas",
+}
+MODOS = {
+    "natural": "Lenguaje natural",
+    "booleano": "Booleano (+palabra, -palabra, \"frase\", prefijo*)",
+    "expansion": "Lenguaje natural con expansión de consulta",
+}
+
 
 @app.route("/", methods=["GET", "POST"])
 def cargar_archivos():
@@ -67,27 +78,57 @@ def cargar_archivos():
 
 @app.route("/buscar", methods=["GET", "POST"])
 def pagina_busqueda():
+    motor = request.values.get("motor", "fulltext")
+    modo = request.values.get("modo", "natural")
+    if motor not in MOTORES:
+        motor = "fulltext"
+    if modo not in MODOS:
+        modo = "natural"
+    opciones = {"motores": MOTORES, "modos": MODOS, "motor": motor, "modo": modo}
+
     if request.method == "GET" and "consulta" not in request.args:
-        return render_template("buscar.html")
+        return render_template("buscar.html", **opciones)
 
     consulta = request.values.get("consulta", "").strip()
     if not consulta:
         return render_template(
             "buscar.html",
             error="Escribe un término o una frase para buscar.",
+            **opciones,
         ), 400
 
-    return resultados(consulta)
+    return resultados(consulta, motor, modo)
 
 
-def resultados(consulta):
+def resultados(consulta, motor="fulltext", modo="natural"):
     from buscador import buscar
+    from buscador_fulltext import buscar_fulltext
 
-    encontrados = buscar(consulta)
+    datos = {"consulta": consulta, "motor": motor, "modo": modo, "modos": MODOS}
+
+    if motor == "comparar":
+        return render_template(
+            "comparar.html",
+            fulltext=buscar_fulltext(consulta, modo),
+            tfidf=buscar(consulta),
+            **datos,
+        )
+
+    if motor == "tfidf":
+        encontrados = buscar(consulta)
+        sistema = MOTORES["tfidf"]
+        etiqueta = "Similitud coseno"
+    else:
+        encontrados = buscar_fulltext(consulta, modo)
+        sistema = f"{MOTORES['fulltext']} · {MODOS[modo]}"
+        etiqueta = "Relevancia MATCH … AGAINST"
+
     return render_template(
         "resultados.html",
-        consulta=consulta,
         resultados=encontrados,
+        sistema=sistema,
+        etiqueta=etiqueta,
+        **datos,
     )
 
 

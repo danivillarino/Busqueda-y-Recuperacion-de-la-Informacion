@@ -11,7 +11,7 @@
     <a href="{{ url_for('cargar_archivos') }}">Cargar archivos</a>
     <a href="{{ url_for('pagina_busqueda') }}">Buscar</a>
   </nav>
-  <main>
+  <main class="{% block main_class %}{% endblock %}">
     {% block content %}{% endblock %}
   </main>
 </body>

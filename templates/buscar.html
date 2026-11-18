@@ -11,6 +11,22 @@
 <form action="{{ url_for('pagina_busqueda') }}" method="get">
   <label for="consulta">Consulta</label>
   <input id="consulta" name="consulta" type="search" required>
+
+  <label for="motor">Sistema de búsqueda</label>
+  <select id="motor" name="motor">
+    {% for valor, texto in motores.items() %}
+      <option value="{{ valor }}"{% if valor == motor %} selected{% endif %}>{{ texto }}</option>
+    {% endfor %}
+  </select>
+
+  <label for="modo">Modo de búsqueda FULLTEXT</label>
+  <select id="modo" name="modo">
+    {% for valor, texto in modos.items() %}
+      <option value="{{ valor }}"{% if valor == modo %} selected{% endif %}>{{ texto }}</option>
+    {% endfor %}
+  </select>
+  <p class="ayuda">El modo solo aplica al sistema FULLTEXT; el buscador tf-idf siempre usa todas las palabras de la consulta.</p>
+
   <button type="submit">Buscar</button>
 </form>
 {% endblock %}

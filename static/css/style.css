@@ -69,7 +69,8 @@ label {
 }
 
 input[type="file"],
-input[type="search"] {
+input[type="search"],
+select {
   width: 100%;
   min-height: 2.8rem;
   padding: 0.65rem 0.75rem;
@@ -80,6 +81,7 @@ input[type="search"] {
 }
 
 input:focus-visible,
+select:focus-visible,
 button:focus-visible,
 a:focus-visible {
   outline: 3px solid #66b9df;
@@ -147,6 +149,44 @@ button:focus-visible,
 
 .fragmento {
   color: #455660;
+}
+
+main.ancho {
+  width: min(100% - 2rem, 1100px);
+}
+
+.ayuda {
+  color: #5b6b75;
+  font-size: 0.92rem;
+}
+
+.comparacion {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.comparacion h2 {
+  margin: 0 0 0.25rem;
+  color: #173b57;
+  font-size: 1.3rem;
+}
+
+.ranking {
+  margin: 0;
+  padding-left: 1.4rem;
+}
+
+.ranking .resultado h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+@media (max-width: 760px) {
+  .comparacion {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 480px) {

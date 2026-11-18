@@ -1,0 +1,3 @@
+Los motores de búsqueda web rastrean páginas y construyen un índice.
+MySQL ofrece índices FULLTEXT para la búsqueda de texto completo.
+La relevancia de cada página depende de los términos de la consulta.

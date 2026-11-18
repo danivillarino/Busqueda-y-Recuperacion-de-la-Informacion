@@ -2,6 +2,7 @@
 
 import os
 import re
+import unicodedata
 from collections import Counter
 
 from config import LONGITUD_FRAGMENTO
@@ -57,13 +58,31 @@ def contar_frecuencias(tokens):
     return dict(Counter(tokens))
 
 
+def _sin_acentos(texto):
+    """Pasa a minúsculas y quita acentos conservando la longitud del texto.
+
+    Cada carácter se sustituye por su letra base, así una posición encontrada
+    en el texto normalizado es válida en el texto original.
+    """
+    return "".join(
+        unicodedata.normalize("NFD", caracter)[0].lower() for caracter in texto
+    )
+
+
+def buscar_posicion(texto, termino):
+    """Devuelve la primera posición del término sin distinguir acentos, o -1."""
+    if not termino:
+        return -1
+    return _sin_acentos(texto).find(_sin_acentos(termino))
+
+
 def extraer_fragmento(texto, termino):
     """Extrae hasta 50 caracteres alrededor de la primera aparición del término."""
     limite = min(LONGITUD_FRAGMENTO, 50)
     if limite <= 0:
         return ""
 
-    posicion = texto.lower().find(termino.lower()) if termino else -1
+    posicion = buscar_posicion(texto, termino)
     if posicion < 0:
         return texto[:limite]
 
@@ -74,7 +93,12 @@ def extraer_fragmento(texto, termino):
 
 
 def indexar_coleccion(carpeta):
-    """Reconstruye el índice invertido con los archivos .txt de una carpeta."""
+    """Reconstruye el índice invertido y el índice FULLTEXT de una carpeta.
+
+    El texto completo de cada archivo se guarda en documentos.contenido, que
+    tiene un índice FULLTEXT; las tablas diccionario y posting se siguen
+    llenando para el buscador tf-idf.
+    """
     nombres = sorted(os.listdir(carpeta), key=str.casefold)
     documentos = []
     estadisticas = {}
@@ -99,7 +123,7 @@ def indexar_coleccion(carpeta):
 
     documentos_indexados = []
     for nombre, texto, frecuencias in documentos:
-        doc_id = insertar_documento(nombre)
+        doc_id = insertar_documento(nombre, texto)
         documentos_indexados.append((doc_id, nombre, texto, frecuencias))
 
     for termino in sorted(estadisticas):

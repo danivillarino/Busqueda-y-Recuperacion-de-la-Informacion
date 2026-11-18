@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}Comparación · Índice y búsqueda{% endblock %}
+{% block main_class %}ancho{% endblock %}
+{% block content %}
+<h1>Comparación de sistemas</h1>
+<p>Consulta: <strong>{{ consulta }}</strong></p>
+
+<div class="comparacion">
+  {% for titulo, detalle, etiqueta, lista in [
+      ("FULLTEXT de MySQL", modos[modo], "Relevancia", fulltext),
+      ("tf-idf y coseno", "Índice invertido propio", "Coseno", tfidf),
+  ] %}
+    <section>
+      <h2>{{ titulo }}</h2>
+      <p class="ayuda">{{ detalle }} · {{ lista|length }} documento(s)</p>
+      {% if lista %}
+        <ol class="ranking">
+          {% for nombre, fragmento, puntaje in lista %}
+            <li class="resultado">
+              <h3><a href="{{ url_for('descargar', nombre=nombre) }}">{{ nombre }}</a></h3>
+              <p class="fragmento">{{ fragmento }}</p>
+              <p>{{ etiqueta }}: {{ "%.4f"|format(puntaje) }}</p>
+            </li>
+          {% endfor %}
+        </ol>
+      {% else %}
+        <p>No se encontraron documentos.</p>
+      {% endif %}
+    </section>
+  {% endfor %}
+</div>
+
+<a class="boton-enlace" href="{{ url_for('pagina_busqueda', motor=motor, modo=modo) }}">Volver a buscar</a>
+{% endblock %}
